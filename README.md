@@ -126,16 +126,10 @@ echo-http-cache memory adapter takes way less GC pause time, that means smaller 
 - Develop DynamoDB adapter
 - Develop MongoDB adapter
 
-## Who's using?
-- [americanas.com](https://www.americanas.com.br)
-- [Submarino](https://www.submarino.com.br)
-- [Shoptime](https://www.shoptime.com.br)
-- If you are using this package in a production environment, please let me know! :)
-
 ## Godoc Reference
-- [echo-http-cache](https://godoc.org/github.com/SporkHubr/echo-http-cache)
-- [Memory adapter](https://godoc.org/github.com/SporkHubr/echo-http-cache/adapter/memory)
-- [Redis adapter](https://godoc.org/github.com/SporkHubr/echo-http-cache/adapter/redis)
+- [echo-http-cache](https://pkg.go.dev/github.com/SporkHubr/echo-http-cache)
+- [Memory adapter](https://pkg.go.dev/github.com/SporkHubr/echo-http-cache/adapter/memory)
+- [Redis adapter](https://pkg.go.dev/github.com/SporkHubr/echo-http-cache/adapter/redis)
 
 ## License
-http-cache is released under the [MIT License](https://github.com/SporkHubr/echo-http-cache/blob/master/LICENSE).
+echo-http-cache is released under the [MIT License](https://github.com/SporkHubr/echo-http-cache/blob/master/LICENSE).
