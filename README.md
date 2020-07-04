@@ -1,7 +1,7 @@
-# http-cache
+# echo-http-cache
 [![Build Status](https://travis-ci.org/victorspringer/http-cache.svg?branch=master)](https://travis-ci.org/victorspringer/http-cache) [![Coverage Status](https://coveralls.io/repos/github/victorspringer/http-cache/badge.svg?branch=master)](https://coveralls.io/github/victorspringer/http-cache?branch=master) [![](https://img.shields.io/badge/godoc-reference-5272B4.svg?style=flat)](https://godoc.org/github.com/SporkHubr/echo-http-cache)
 
-This is a high performance Golang HTTP middleware for server-side application layer caching, ideal for REST APIs.
+This is a high performance Golang HTTP middleware for server-side application layer caching, ideal for REST APIs, using Echo framework.
 
 It is simple, super fast, thread safe and gives the possibility to choose the adapter (memory, Redis, DynamoDB etc).
 
@@ -9,7 +9,7 @@ The memory adapter minimizes GC overhead to near zero and supports some options 
 
 ## Getting Started
 
-### Installation
+### Installation (Go Modules)
 `go get github.com/SporkHubr/echo-http-cache`
 
 ### Usage
@@ -26,10 +26,11 @@ import (
     
     "github.com/SporkHubr/echo-http-cache"
     "github.com/SporkHubr/echo-http-cache/adapter/memory"
+    "github.com/labstack/echo/v4"
 )
 
-func example(w http.ResponseWriter, r *http.Request) {
-    w.Write([]byte("Ok"))
+func example(c echo.Context) {
+   c.String(http.StatusOk, "Ok")
 }
 
 func main() {
@@ -52,10 +53,10 @@ func main() {
         os.Exit(1)
     }
 
-    handler := http.HandlerFunc(example)
-
-    http.Handle("/", cacheClient.Middleware(handler))
-    http.ListenAndServe(":8080", nil)
+    router := echo.New()
+    router.Use(cacheClient.Middleware())
+    router.GET("/", example)
+    e.Start(":8080")
 }
 ```
 
@@ -115,7 +116,7 @@ cache=bigcache go run benchmark_gc_overhead.go
 Number of entries:  20000000
 GC pause for bigcache:  7.43339ms
 ```
-http-cache memory adapter takes way less GC pause time, that means smaller GC overhead.
+echo-http-cache memory adapter takes way less GC pause time, that means smaller GC overhead.
 
 ## Roadmap
 - Make it compliant with RFC7234
@@ -132,7 +133,7 @@ http-cache memory adapter takes way less GC pause time, that means smaller GC ov
 - If you are using this package in a production environment, please let me know! :)
 
 ## Godoc Reference
-- [http-cache](https://godoc.org/github.com/SporkHubr/echo-http-cache)
+- [echo-http-cache](https://godoc.org/github.com/SporkHubr/echo-http-cache)
 - [Memory adapter](https://godoc.org/github.com/SporkHubr/echo-http-cache/adapter/memory)
 - [Redis adapter](https://godoc.org/github.com/SporkHubr/echo-http-cache/adapter/redis)
 
