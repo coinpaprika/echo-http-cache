@@ -64,10 +64,11 @@ type Response struct {
 
 // Client data structure for HTTP cache middleware.
 type Client struct {
-	adapter    Adapter
-	ttl        time.Duration
-	refreshKey string
-	methods    []string
+	adapter         Adapter
+	ttl             time.Duration
+	refreshKey      string
+	methods         []string
+	restrictedPaths []string
 }
 
 // ClientOption is used to set Client settings.
@@ -90,6 +91,10 @@ type Adapter interface {
 func (client *Client) Middleware() echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
+			if !client.isAllowedPathToCache(c.Request().URL.String()) {
+				next(c)
+				return nil
+			}
 			if client.cacheableMethod(c.Request().Method) {
 				sortURLParams(c.Request().URL)
 				key := generateKey(c.Request().URL.String())
@@ -173,6 +178,15 @@ func (c *Client) cacheableMethod(method string) bool {
 		}
 	}
 	return false
+}
+
+func (c *Client) isAllowedPathToCache(URL string) bool {
+	for _, p := range c.restrictedPaths {
+		if strings.Contains(URL, p) {
+			return false
+		}
+	}
+	return true
 }
 
 // BytesToResponse converts bytes array into Response data structure.
@@ -288,6 +302,15 @@ func ClientWithMethods(methods []string) ClientOption {
 			}
 		}
 		c.methods = methods
+		return nil
+	}
+}
+
+// ClientWithRestrictedPaths sets the restricted HTTP paths for caching.
+// Optional setting.
+func ClientWithRestrictedPaths(paths []string) ClientOption {
+	return func(c *Client) error {
+		c.restrictedPaths = paths
 		return nil
 	}
 }
