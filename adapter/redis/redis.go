@@ -25,17 +25,17 @@ SOFTWARE.
 package redis
 
 import (
+	"context"
 	"time"
 
-	redisCache "github.com/go-redis/cache"
-	"github.com/go-redis/redis"
-	cache "github.com/victorspringer/http-cache"
-	"github.com/vmihailenco/msgpack"
+	cache "github.com/SporkHubr/echo-http-cache"
+	redisCache "github.com/go-redis/cache/v8"
+	"github.com/go-redis/redis/v8"
 )
 
 // Adapter is the memory adapter data structure.
 type Adapter struct {
-	store *redisCache.Codec
+	store *redisCache.Cache
 }
 
 // RingOptions exports go-redis RingOptions type.
@@ -44,7 +44,7 @@ type RingOptions redis.RingOptions
 // Get implements the cache Adapter interface Get method.
 func (a *Adapter) Get(key uint64) ([]byte, bool) {
 	var c []byte
-	if err := a.store.Get(cache.KeyAsString(key), &c); err == nil {
+	if err := a.store.Get(context.Background(), cache.KeyAsString(key), &c); err == nil {
 		return c, true
 	}
 
@@ -54,30 +54,23 @@ func (a *Adapter) Get(key uint64) ([]byte, bool) {
 // Set implements the cache Adapter interface Set method.
 func (a *Adapter) Set(key uint64, response []byte, expiration time.Time) {
 	a.store.Set(&redisCache.Item{
-		Key:        cache.KeyAsString(key),
-		Object:     response,
-		Expiration: expiration.Sub(time.Now()),
+		Key:   cache.KeyAsString(key),
+		Value: response,
+		TTL:   expiration.Sub(time.Now()),
 	})
 }
 
 // Release implements the cache Adapter interface Release method.
 func (a *Adapter) Release(key uint64) {
-	a.store.Delete(cache.KeyAsString(key))
+	a.store.Delete(context.Background(), cache.KeyAsString(key))
 }
 
 // NewAdapter initializes Redis adapter.
 func NewAdapter(opt *RingOptions) cache.Adapter {
 	ropt := redis.RingOptions(*opt)
 	return &Adapter{
-		&redisCache.Codec{
+		redisCache.New(&redisCache.Options{
 			Redis: redis.NewRing(&ropt),
-			Marshal: func(v interface{}) ([]byte, error) {
-				return msgpack.Marshal(v)
-
-			},
-			Unmarshal: func(b []byte, v interface{}) error {
-				return msgpack.Unmarshal(b, v)
-			},
-		},
+		}),
 	}
 }

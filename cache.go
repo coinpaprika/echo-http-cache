@@ -38,6 +38,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/labstack/echo/v4"
 )
 
 // Response is the cached response data structure.
@@ -85,79 +87,83 @@ type Adapter interface {
 }
 
 // Middleware is the HTTP cache middleware handler.
-func (c *Client) Middleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if c.cacheableMethod(r.Method) {
-			sortURLParams(r.URL)
-			key := generateKey(r.URL.String())
-			if r.Method == http.MethodPost && r.Body != nil {
-				body, err := ioutil.ReadAll(r.Body)
-				defer r.Body.Close()
-				if err != nil {
-					next.ServeHTTP(w, r)
-					return
-				}
-				reader := ioutil.NopCloser(bytes.NewBuffer(body))
-				key = generateKeyWithBody(r.URL.String(), body)
-				r.Body = reader
-			}
-
-			params := r.URL.Query()
-			if _, ok := params[c.refreshKey]; ok {
-				delete(params, c.refreshKey)
-
-				r.URL.RawQuery = params.Encode()
-				key = generateKey(r.URL.String())
-
-				c.adapter.Release(key)
-			} else {
-				b, ok := c.adapter.Get(key)
-				response := BytesToResponse(b)
-				if ok {
-					if response.Expiration.After(time.Now()) {
-						response.LastAccess = time.Now()
-						response.Frequency++
-						c.adapter.Set(key, response.Bytes(), response.Expiration)
-
-						//w.WriteHeader(http.StatusNotModified)
-						for k, v := range response.Header {
-							w.Header().Set(k, strings.Join(v, ","))
-						}
-						w.Write(response.Value)
-						return
+func (client *Client) Middleware() echo.MiddlewareFunc {
+	return func(next echo.HandlerFunc) echo.HandlerFunc {
+		return func(c echo.Context) error {
+			if client.cacheableMethod(c.Request().Method) {
+				sortURLParams(c.Request().URL)
+				key := generateKey(c.Request().URL.String())
+				if c.Request().Method == http.MethodPost && c.Request().Body != nil {
+					body, err := ioutil.ReadAll(c.Request().Body)
+					defer c.Request().Body.Close()
+					if err != nil {
+						next(c)
+						return nil
 					}
-
-					c.adapter.Release(key)
+					reader := ioutil.NopCloser(bytes.NewBuffer(body))
+					key = generateKeyWithBody(c.Request().URL.String(), body)
+					c.Request().Body = reader
 				}
-			}
 
-			rec := httptest.NewRecorder()
-			next.ServeHTTP(rec, r)
-			result := rec.Result()
+				params := c.Request().URL.Query()
+				if _, ok := params[client.refreshKey]; ok {
+					delete(params, client.refreshKey)
 
-			statusCode := result.StatusCode
-			value := rec.Body.Bytes()
-			if statusCode < 400 {
-				now := time.Now()
+					c.Request().URL.RawQuery = params.Encode()
+					key = generateKey(c.Request().URL.String())
 
-				response := Response{
-					Value:      value,
-					Header:     result.Header,
-					Expiration: now.Add(c.ttl),
-					LastAccess: now,
-					Frequency:  1,
+					client.adapter.Release(key)
+				} else {
+					b, ok := client.adapter.Get(key)
+					response := BytesToResponse(b)
+					if ok {
+						if response.Expiration.After(time.Now()) {
+							response.LastAccess = time.Now()
+							response.Frequency++
+							client.adapter.Set(key, response.Bytes(), response.Expiration)
+
+							//w.WriteHeader(http.StatusNotModified)
+							for k, v := range response.Header {
+								c.Response().Header().Set(k, strings.Join(v, ","))
+							}
+							c.Response().WriteHeader(http.StatusOK)
+							c.Response().Write(response.Value)
+							return nil
+						}
+
+						client.adapter.Release(key)
+					}
 				}
-				c.adapter.Set(key, response.Bytes(), response.Expiration)
+
+				rec := httptest.NewRecorder()
+				next(c)
+				result := rec.Result()
+
+				statusCode := result.StatusCode
+				value := rec.Body.Bytes()
+				if statusCode < 400 {
+					now := time.Now()
+
+					response := Response{
+						Value:      value,
+						Header:     result.Header,
+						Expiration: now.Add(client.ttl),
+						LastAccess: now,
+						Frequency:  1,
+					}
+					client.adapter.Set(key, response.Bytes(), response.Expiration)
+				}
+				for k, v := range result.Header {
+					c.Response().Header().Set(k, strings.Join(v, ","))
+				}
+				c.Response().WriteHeader(statusCode)
+				c.Response().Write(value)
+				return nil
 			}
-			for k, v := range result.Header {
-				w.Header().Set(k, strings.Join(v, ","))
-			}
-			w.WriteHeader(statusCode)
-			w.Write(value)
-			return
+			next(c)
+			return nil
 		}
-		next.ServeHTTP(w, r)
-	})
+	}
 }
 
 func (c *Client) cacheableMethod(method string) bool {
