@@ -187,11 +187,11 @@ func (client *Client) Middleware() echo.MiddlewareFunc {
 					}
 					client.adapter.Set(key, response.Bytes(), response.Expiration)
 				}
-				for k, v := range writer.Header() {
-					c.Response().Header().Set(k, strings.Join(v, ","))
-				}
-				c.Response().WriteHeader(statusCode)
-				c.Response().Write(value)
+				//for k, v := range writer.Header() {
+				//	c.Response().Header().Set(k, strings.Join(v, ","))
+				//}
+				//c.Response().WriteHeader(statusCode)
+				//c.Response().Write(value)
 				return nil
 			}
 			if err := next(c); err != nil {
