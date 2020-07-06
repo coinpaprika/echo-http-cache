@@ -25,14 +25,16 @@ SOFTWARE.
 package cache
 
 import (
+	"bufio"
 	"bytes"
 	"encoding/gob"
 	"errors"
 	"fmt"
 	"hash/fnv"
+	"io"
 	"io/ioutil"
+	"net"
 	"net/http"
-	"net/http/httptest"
 	"net/url"
 	"sort"
 	"strconv"
@@ -69,6 +71,29 @@ type Client struct {
 	refreshKey      string
 	methods         []string
 	restrictedPaths []string
+}
+
+type bodyDumpResponseWriter struct {
+	io.Writer
+	http.ResponseWriter
+	statusCode int
+}
+
+func (w *bodyDumpResponseWriter) WriteHeader(code int) {
+	w.statusCode = code
+	w.ResponseWriter.WriteHeader(code)
+}
+
+func (w *bodyDumpResponseWriter) Write(b []byte) (int, error) {
+	return w.Writer.Write(b)
+}
+
+func (w *bodyDumpResponseWriter) Flush() {
+	w.ResponseWriter.(http.Flusher).Flush()
+}
+
+func (w *bodyDumpResponseWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
+	return w.ResponseWriter.(http.Hijacker).Hijack()
 }
 
 // ClientOption is used to set Client settings.
@@ -140,32 +165,39 @@ func (client *Client) Middleware() echo.MiddlewareFunc {
 					}
 				}
 
-				rec := httptest.NewRecorder()
-				next(c)
-				result := rec.Result()
+				resBody := new(bytes.Buffer)
+				mw := io.MultiWriter(c.Response().Writer, resBody)
+				writer := &bodyDumpResponseWriter{Writer: mw, ResponseWriter: c.Response().Writer}
+				c.Response().Writer = writer
+				if err := next(c); err != nil {
+					c.Error(err)
+				}
 
-				statusCode := result.StatusCode
-				value := rec.Body.Bytes()
+				statusCode := writer.statusCode
+				value := resBody.Bytes()
 				if statusCode < 400 {
 					now := time.Now()
 
 					response := Response{
 						Value:      value,
-						Header:     result.Header,
+						Header:     writer.Header(),
 						Expiration: now.Add(client.ttl),
 						LastAccess: now,
 						Frequency:  1,
 					}
 					client.adapter.Set(key, response.Bytes(), response.Expiration)
 				}
-				for k, v := range result.Header {
+				c.Response().Writer = writer.ResponseWriter
+				for k, v := range writer.Header() {
 					c.Response().Header().Set(k, strings.Join(v, ","))
 				}
 				c.Response().WriteHeader(statusCode)
 				c.Response().Write(value)
 				return nil
 			}
-			next(c)
+			if err := next(c); err != nil {
+				c.Error(err)
+			}
 			return nil
 		}
 	}
