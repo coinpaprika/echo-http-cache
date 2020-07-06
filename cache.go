@@ -187,7 +187,6 @@ func (client *Client) Middleware() echo.MiddlewareFunc {
 					}
 					client.adapter.Set(key, response.Bytes(), response.Expiration)
 				}
-				c.Response().Writer = writer.ResponseWriter
 				for k, v := range writer.Header() {
 					c.Response().Header().Set(k, strings.Join(v, ","))
 				}
