@@ -31,16 +31,18 @@ func (a *adapterMock) Get(key uint64) ([]byte, bool) {
 	return nil, false
 }
 
-func (a *adapterMock) Set(key uint64, response []byte, expiration time.Time) {
+func (a *adapterMock) Set(key uint64, response []byte, expiration time.Time) error {
 	a.Lock()
 	defer a.Unlock()
 	a.store[key] = response
+	return nil
 }
 
-func (a *adapterMock) Release(key uint64) {
+func (a *adapterMock) Release(key uint64) error {
 	a.Lock()
 	defer a.Unlock()
 	delete(a.store, key)
+	return nil
 }
 
 func (errReader) Read(p []byte) (n int, err error) {

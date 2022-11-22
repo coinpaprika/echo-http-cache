@@ -106,10 +106,10 @@ type Adapter interface {
 	Get(key uint64) ([]byte, bool)
 
 	// Set caches a response for a given key until an expiration date.
-	Set(key uint64, response []byte, expiration time.Time)
+	Set(key uint64, response []byte, expiration time.Time) error
 
 	// Release frees cache for a given key.
-	Release(key uint64)
+	Release(key uint64) error
 }
 
 // Middleware is the HTTP cache middleware handler.
@@ -152,7 +152,7 @@ func (client *Client) Middleware() echo.MiddlewareFunc {
 							response.Frequency++
 							client.adapter.Set(key, response.Bytes(), response.Expiration)
 
-							//w.WriteHeader(http.StatusNotModified)
+							// w.WriteHeader(http.StatusNotModified)
 							for k, v := range response.Header {
 								c.Response().Header().Set(k, strings.Join(v, ","))
 							}
@@ -187,11 +187,11 @@ func (client *Client) Middleware() echo.MiddlewareFunc {
 					}
 					client.adapter.Set(key, response.Bytes(), response.Expiration)
 				}
-				//for k, v := range writer.Header() {
+				// for k, v := range writer.Header() {
 				//	c.Response().Header().Set(k, strings.Join(v, ","))
-				//}
-				//c.Response().WriteHeader(statusCode)
-				//c.Response().Write(value)
+				// }
+				// c.Response().WriteHeader(statusCode)
+				// c.Response().Write(value)
 				return nil
 			}
 			if err := next(c); err != nil {

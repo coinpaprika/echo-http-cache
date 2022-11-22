@@ -75,14 +75,14 @@ func (a *Adapter) Get(key uint64) ([]byte, bool) {
 }
 
 // Set implements the cache Adapter interface Set method.
-func (a *Adapter) Set(key uint64, response []byte, expiration time.Time) {
+func (a *Adapter) Set(key uint64, response []byte, expiration time.Time) error {
 	a.mutex.Lock()
 	defer a.mutex.Unlock()
 
 	if _, ok := a.store[key]; ok {
 		// Known key, overwrite previous item.
 		a.store[key] = response
-		return
+		return nil
 	}
 
 	if len(a.store) >= a.capacity {
@@ -90,14 +90,16 @@ func (a *Adapter) Set(key uint64, response []byte, expiration time.Time) {
 	}
 
 	a.store[key] = response
+	return nil
 }
 
 // Release implements the Adapter interface Release method.
-func (a *Adapter) Release(key uint64) {
+func (a *Adapter) Release(key uint64) error {
 	a.mutex.Lock()
 	defer a.mutex.Unlock()
 
 	delete(a.store, key)
+	return nil
 }
 
 func (a *Adapter) evict() {

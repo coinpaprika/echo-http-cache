@@ -7,6 +7,7 @@ import (
 	"time"
 
 	cache "github.com/coinpaprika/echo-http-cache"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -74,7 +75,8 @@ func (suite *RedisTestSuite) Test() {
 		suite.T().Run(tt.name, func(t *testing.T) {
 			suite.T().Logf("setting key: %d", tt.key)
 
-			suite.adapter.Set(tt.key, tt.response, time.Now().Add(1*time.Minute))
+			err := suite.adapter.Set(tt.key, tt.response, time.Now().Add(1*time.Minute))
+			assert.NoError(t, err)
 		})
 	}
 
@@ -144,7 +146,8 @@ func (suite *RedisTestSuite) Test() {
 		suite.T().Run(tt.name, func(t *testing.T) {
 			suite.T().Logf("releasing key: %d", tt.key)
 
-			suite.adapter.Release(tt.key)
+			err := suite.adapter.Release(tt.key)
+			assert.NoError(t, err)
 			if _, ok := suite.adapter.Get(tt.key); ok {
 				t.Errorf("memory.Release() error; key %v should not be found", tt.key)
 			}

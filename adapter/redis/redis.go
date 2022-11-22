@@ -52,8 +52,8 @@ func (a *Adapter) Get(key uint64) ([]byte, bool) {
 }
 
 // Set implements the cache Adapter interface Set method.
-func (a *Adapter) Set(key uint64, response []byte, expiration time.Time) {
-	a.store.Set(&redisCache.Item{
+func (a *Adapter) Set(key uint64, response []byte, expiration time.Time) error {
+	return a.store.Set(&redisCache.Item{
 		Key:   cache.KeyAsString(key),
 		Value: response,
 		TTL:   expiration.Sub(time.Now()),
@@ -61,8 +61,8 @@ func (a *Adapter) Set(key uint64, response []byte, expiration time.Time) {
 }
 
 // Release implements the cache Adapter interface Release method.
-func (a *Adapter) Release(key uint64) {
-	a.store.Delete(context.Background(), cache.KeyAsString(key))
+func (a *Adapter) Release(key uint64) error {
+	return a.store.Delete(context.Background(), cache.KeyAsString(key))
 }
 
 // NewAdapter initializes Redis adapter.
