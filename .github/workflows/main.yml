@@ -9,14 +9,7 @@ jobs:
   test:
     name: Test & coverage
     runs-on: ubuntu-latest
-    services:
-      redis:
-        image: redis
-        options: >-
-          --health-cmd "redis-cli ping"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
+
     steps:
       - name: Set up Go
         uses: actions/setup-go@v3
@@ -27,8 +20,8 @@ jobs:
       - name: Check out code
         uses: actions/checkout@v3
 
+      - name: Start Redis
+        uses: supercharge/redis-github-action@1.4.0
+
       - name: Run unit tests with
-        env:
-          REDIS_HOST: redis
-          REDIS_PORT: 6379
         run: go test -race ./...
