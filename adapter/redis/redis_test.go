@@ -40,7 +40,6 @@ func (suite *RedisTestSuite) SetupTest() {
 }
 
 func (suite *RedisTestSuite) Test1Set() {
-
 	tests := []struct {
 		name     string
 		key      uint64
