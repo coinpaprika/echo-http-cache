@@ -11,6 +11,8 @@ import (
 	"sync"
 	"testing"
 	"time"
+
+	"github.com/labstack/echo/v4"
 )
 
 type adapterMock struct {
@@ -46,10 +48,12 @@ func (errReader) Read(p []byte) (n int, err error) {
 }
 
 func TestMiddleware(t *testing.T) {
+	e := echo.New()
+
 	counter := 0
-	httpTestHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte(fmt.Sprintf("new value %v", counter)))
-	})
+	handler := func(c echo.Context) error {
+		return c.String(http.StatusOK, fmt.Sprintf("new value %v", counter))
+	}
 
 	adapter := &adapterMock{
 		store: map[uint64][]byte{
@@ -79,7 +83,7 @@ func TestMiddleware(t *testing.T) {
 		ClientWithMethods([]string{http.MethodGet, http.MethodPost}),
 	)
 
-	handler := client.Middleware(httpTestHandler)
+	middleware := client.Middleware()
 
 	tests := []struct {
 		name     string
@@ -189,33 +193,34 @@ func TestMiddleware(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			counter++
-			var r *http.Request
+			var req *http.Request
 			var err error
 
 			if counter != 12 {
 				reader := bytes.NewReader(tt.body)
-				r, err = http.NewRequest(tt.method, tt.url, reader)
+				req, err = http.NewRequest(tt.method, tt.url, reader)
 				if err != nil {
 					t.Error(err)
 					return
 				}
 			} else {
-				r, err = http.NewRequest(tt.method, tt.url, errReader(0))
+				req, err = http.NewRequest(tt.method, tt.url, errReader(0))
 				if err != nil {
 					t.Error(err)
 					return
 				}
 			}
 
-			w := httptest.NewRecorder()
-			handler.ServeHTTP(w, r)
+			rec := httptest.NewRecorder()
+			c := e.NewContext(req, rec)
+			_ = middleware(handler)(c)
 
-			if !reflect.DeepEqual(w.Code, tt.wantCode) {
-				t.Errorf("*Client.Middleware() = %v, want %v", w.Code, tt.wantCode)
+			if !reflect.DeepEqual(rec.Code, tt.wantCode) {
+				t.Errorf("*Client.Middleware() = %v, want %v", rec.Code, tt.wantCode)
 				return
 			}
-			if !reflect.DeepEqual(w.Body.String(), tt.wantBody) {
-				t.Errorf("*Client.Middleware() = %v, want %v", w.Body.String(), tt.wantBody)
+			if !reflect.DeepEqual(rec.Body.String(), tt.wantBody) {
+				t.Errorf("*Client.Middleware() = %v, want %v", rec.Body.String(), tt.wantBody)
 			}
 		})
 	}

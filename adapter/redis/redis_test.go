@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	cache "github.com/SporkHubr/echo-http-cache"
+	cache "github.com/coinpaprika/echo-http-cache"
 )
 
 var a cache.Adapter

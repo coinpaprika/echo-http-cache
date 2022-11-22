@@ -28,7 +28,7 @@ import (
 	"context"
 	"time"
 
-	cache "github.com/SporkHubr/echo-http-cache"
+	cache "github.com/coinpaprika/echo-http-cache"
 	redisCache "github.com/go-redis/cache/v8"
 	"github.com/go-redis/redis/v8"
 )
