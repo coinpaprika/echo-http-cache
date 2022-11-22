@@ -23,7 +23,7 @@ func TestRedisTestSuite(t *testing.T) {
 func (suite *RedisTestSuite) SetupTest() {
 	host := os.Getenv("REDIS_HOST")
 	if host == "" {
-		host = "server"
+		host = "redis"
 	}
 
 	port := os.Getenv("REDIS_PORT")
