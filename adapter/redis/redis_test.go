@@ -22,6 +22,8 @@ func TestSet(t *testing.T) {
 		port = "6379"
 	}
 
+	print("HOST: ", host, " PORT: ", port)
+
 	a = NewAdapter(&RingOptions{
 		Addrs: map[string]string{
 			host: ":" + port,
