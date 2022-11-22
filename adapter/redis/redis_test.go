@@ -22,7 +22,7 @@ func TestSet(t *testing.T) {
 		port = "6379"
 	}
 
-	print("HOST: ", host, " PORT: ", port)
+	t.Logf("Using REDIS host: %s port: %s", host, port)
 
 	a = NewAdapter(&RingOptions{
 		Addrs: map[string]string{
