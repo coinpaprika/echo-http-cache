@@ -56,7 +56,7 @@ func (a *Adapter) Set(key uint64, response []byte, expiration time.Time) error {
 	return a.store.Set(&redisCache.Item{
 		Key:   cache.KeyAsString(key),
 		Value: response,
-		TTL:   expiration.Sub(time.Now()),
+		TTL:   time.Until(expiration),
 	})
 }
 

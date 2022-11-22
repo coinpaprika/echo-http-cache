@@ -1,16 +1,13 @@
 # echo-http-cache
-[![Build Status](https://travis-ci.org/victorspringer/http-cache.svg?branch=master)](https://travis-ci.org/victorspringer/http-cache) [![Coverage Status](https://coveralls.io/repos/github/victorspringer/http-cache/badge.svg?branch=master)](https://coveralls.io/github/victorspringer/http-cache?branch=master) [![](https://img.shields.io/badge/godoc-reference-5272B4.svg?style=flat)](https://godoc.org/github.com/SporkHubr/echo-http-cache)
+[![Check & test & build](https://github.com/coinpaprika/echo-http-cache/actions/workflows/main.yml/badge.svg)](https://github.com/coinpaprika/echo-http-cache/actions/workflows/main.yml)
 
 This is a high performance Golang HTTP middleware for server-side application layer caching, ideal for REST APIs, using Echo framework.
-
-It is simple, superfast, thread safe and gives the possibility to choose the adapter (memory, Redis, DynamoDB etc).
-
-The memory adapter minimizes GC overhead to near zero and supports some options of caching algorithms (LRU, MRU, LFU, MFU). This way, it is able to store plenty of gigabytes of responses, keeping great performance and being free of leaks.
+It is simple, superfast, thread safe and gives the possibility to choose the adapter (memory, Redis).
 
 ## Getting Started
 
 ### Installation (Go Modules)
-`go get github.com/SporkHubr/echo-http-cache`
+`go get github.com/coinpaprika/echo-http-cache`
 
 ### Usage
 This is an example of use with the memory adapter:
@@ -19,52 +16,44 @@ This is an example of use with the memory adapter:
 package main
 
 import (
-    "fmt"
-    "net/http"
-    "os"
-    "time"
-    
-    "github.com/SporkHubr/echo-http-cache"
-    "github.com/SporkHubr/echo-http-cache/adapter/memory"
-    "github.com/labstack/echo/v4"
+	"log"
+	"net/http"
+	"time"
+
+	cache "github.com/coinpaprika/echo-http-cache"
+	"github.com/coinpaprika/echo-http-cache/adapter/memory"
+	"github.com/labstack/echo/v4"
 )
 
-func example(c echo.Context) {
-   c.String(http.StatusOk, "Ok")
-}
-
 func main() {
-    memcached, err := memory.NewAdapter(
-        memory.AdapterWithAlgorithm(memory.LRU),
-        memory.AdapterWithCapacity(10000000),
-    )
-    if err != nil {
-        fmt.Println(err)
-        os.Exit(1)
-    }
+	memoryAdapter, err := memory.NewAdapter()
+	if err != nil {
+		log.Fatal(err)
+	}
 
-    cacheClient, err := cache.NewClient(
-        cache.ClientWithAdapter(memcached),
-        cache.ClientWithTTL(10 * time.Minute),
-        cache.ClientWithRefreshKey("opn"),
-    )
-    if err != nil {
-        fmt.Println(err)
-        os.Exit(1)
-    }
+	cacheClient, err := cache.NewClient(
+		cache.ClientWithAdapter(memoryAdapter),
+		cache.ClientWithTTL(10*time.Minute),
+		cache.ClientWithRefreshKey("opn"),
+	)
+	if err != nil {
+		log.Fatal(err)
+	}
 
-    router := echo.New()
-    router.Use(cacheClient.Middleware())
-    router.GET("/", example)
-    e.Start(":8080")
+	e := echo.New()
+	e.Use(cacheClient.Middleware())
+	e.GET("/", func(c echo.Context) error {
+		return c.String(http.StatusOK, "OK")
+	})
+	e.Start(":8080")
 }
 ```
 
 Example of Client initialization with Redis adapter:
 ```go
 import (
-    "github.com/SporkHubr/echo-http-cache"
-    "github.com/SporkHubr/echo-http-cache/adapter/redis"
+    "github.com/coinpaprika/echo-http-cache"
+    "github.com/coinpaprika/echo-http-cache/adapter/redis"
 )
 
 ...

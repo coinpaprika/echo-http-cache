@@ -32,7 +32,6 @@ import (
 	"fmt"
 	"hash/fnv"
 	"io"
-	"io/ioutil"
 	"net"
 	"net/http"
 	"net/url"
@@ -124,13 +123,13 @@ func (client *Client) Middleware() echo.MiddlewareFunc {
 				sortURLParams(c.Request().URL)
 				key := generateKey(c.Request().URL.String())
 				if c.Request().Method == http.MethodPost && c.Request().Body != nil {
-					body, err := ioutil.ReadAll(c.Request().Body)
+					body, err := io.ReadAll(c.Request().Body)
 					defer c.Request().Body.Close()
 					if err != nil {
 						next(c)
-						return nil
+						return nil // nolint
 					}
-					reader := ioutil.NopCloser(bytes.NewBuffer(body))
+					reader := io.NopCloser(bytes.NewBuffer(body))
 					key = generateKeyWithBody(c.Request().URL.String(), body)
 					c.Request().Body = reader
 				}
@@ -202,8 +201,8 @@ func (client *Client) Middleware() echo.MiddlewareFunc {
 	}
 }
 
-func (c *Client) cacheableMethod(method string) bool {
-	for _, m := range c.methods {
+func (client *Client) cacheableMethod(method string) bool {
+	for _, m := range client.methods {
 		if method == m {
 			return true
 		}
@@ -211,8 +210,8 @@ func (c *Client) cacheableMethod(method string) bool {
 	return false
 }
 
-func (c *Client) isAllowedPathToCache(URL string) bool {
-	for _, p := range c.restrictedPaths {
+func (client *Client) isAllowedPathToCache(URL string) bool {
+	for _, p := range client.restrictedPaths {
 		if strings.Contains(URL, p) {
 			return false
 		}
