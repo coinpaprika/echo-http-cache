@@ -26,7 +26,6 @@ func (suite *RedisTestSuite) SetupTest() {
 	if host == "" {
 		host = "redis"
 	}
-	host = "127.0.0.1"
 
 	port := os.Getenv("REDIS_PORT")
 	if port == "" {
