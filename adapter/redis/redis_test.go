@@ -39,7 +39,7 @@ func (suite *RedisTestSuite) SetupTest() {
 	})
 }
 
-func (suite *RedisTestSuite) Test1Set() {
+func (suite *RedisTestSuite) Test1() {
 	tests := []struct {
 		name     string
 		key      uint64
@@ -77,7 +77,7 @@ func (suite *RedisTestSuite) Test1Set() {
 	}
 }
 
-func (suite *RedisTestSuite) Test2Get() {
+func (suite *RedisTestSuite) Test2() {
 	tests := []struct {
 		name string
 		key  uint64
@@ -118,7 +118,7 @@ func (suite *RedisTestSuite) Test2Get() {
 	}
 }
 
-func (suite *RedisTestSuite) Test3Release() {
+func (suite *RedisTestSuite) Test3() {
 	tests := []struct {
 		name string
 		key  uint64
