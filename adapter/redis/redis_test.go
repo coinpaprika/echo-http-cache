@@ -1,6 +1,7 @@
 package redis
 
 import (
+	"os"
 	"reflect"
 	"testing"
 	"time"
@@ -11,9 +12,19 @@ import (
 var a cache.Adapter
 
 func TestSet(t *testing.T) {
+	host := os.Getenv("REDIS_HOST")
+	if host == "" {
+		host = "server"
+	}
+
+	port := os.Getenv("REDIS_PORT")
+	if port == "" {
+		port = "6379"
+	}
+
 	a = NewAdapter(&RingOptions{
 		Addrs: map[string]string{
-			"server": ":6379",
+			host: ":" + port,
 		},
 	})
 

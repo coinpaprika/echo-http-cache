@@ -3,7 +3,7 @@
 
 This is a high performance Golang HTTP middleware for server-side application layer caching, ideal for REST APIs, using Echo framework.
 
-It is simple, super fast, thread safe and gives the possibility to choose the adapter (memory, Redis, DynamoDB etc).
+It is simple, superfast, thread safe and gives the possibility to choose the adapter (memory, Redis, DynamoDB etc).
 
 The memory adapter minimizes GC overhead to near zero and supports some options of caching algorithms (LRU, MRU, LFU, MFU). This way, it is able to store plenty of gigabytes of responses, keeping great performance and being free of leaks.
 
@@ -82,11 +82,6 @@ import (
 
 ...
 ```
-
-## Godoc Reference
-- [echo-http-cache](https://pkg.go.dev/github.com/SporkHubr/echo-http-cache)
-- [Memory adapter](https://pkg.go.dev/github.com/SporkHubr/echo-http-cache/adapter/memory)
-- [Redis adapter](https://pkg.go.dev/github.com/SporkHubr/echo-http-cache/adapter/redis)
 
 ## License
 echo-http-cache is released under the [MIT License](https://github.com/SporkHubr/echo-http-cache/blob/master/LICENSE).
