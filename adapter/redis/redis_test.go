@@ -72,6 +72,8 @@ func (suite *RedisTestSuite) Test() {
 	}
 	for _, tt := range testsSet {
 		suite.T().Run(tt.name, func(t *testing.T) {
+			suite.T().Logf("setting key: %d", tt.key)
+
 			suite.adapter.Set(tt.key, tt.response, time.Now().Add(1*time.Minute))
 		})
 	}
@@ -83,13 +85,13 @@ func (suite *RedisTestSuite) Test() {
 		ok   bool
 	}{
 		{
-			"returns right response",
+			"returns right response 1",
 			1,
 			[]byte("value 1"),
 			true,
 		},
 		{
-			"returns right response",
+			"returns right response 2",
 			2,
 			[]byte("value 2"),
 			true,
@@ -103,6 +105,8 @@ func (suite *RedisTestSuite) Test() {
 	}
 	for _, tt := range testsGet {
 		suite.T().Run(tt.name, func(t *testing.T) {
+			suite.T().Logf("getting key: %d", tt.key)
+
 			b, ok := suite.adapter.Get(tt.key)
 			if ok != tt.ok {
 				t.Errorf("memory.Get() ok = %v, tt.ok %v", ok, tt.ok)
@@ -138,6 +142,8 @@ func (suite *RedisTestSuite) Test() {
 	}
 	for _, tt := range testsRelease {
 		suite.T().Run(tt.name, func(t *testing.T) {
+			suite.T().Logf("releasing key: %d", tt.key)
+
 			suite.adapter.Release(tt.key)
 			if _, ok := suite.adapter.Get(tt.key); ok {
 				t.Errorf("memory.Release() error; key %v should not be found", tt.key)
