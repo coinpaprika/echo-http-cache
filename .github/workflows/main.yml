@@ -6,7 +6,8 @@ on:
   pull_request:
 
 jobs:
-  container-job:
+  test:
+    name: Test & coverage
     runs-on: ubuntu-latest
     services:
       redis:
@@ -16,10 +17,6 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
-
-  test:
-    name: Test & coverage
-    runs-on: ubuntu-latest
     steps:
       - name: Set up Go
         uses: actions/setup-go@v3
