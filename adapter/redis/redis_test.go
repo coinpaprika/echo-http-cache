@@ -35,7 +35,7 @@ func (suite *RedisTestSuite) SetupTest() {
 
 	suite.adapter = NewAdapter(&RingOptions{
 		Addrs: map[string]string{
-			host: ":" + port,
+			"server": host + ":" + port,
 		},
 	})
 }
