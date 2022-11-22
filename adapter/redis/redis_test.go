@@ -1,6 +1,7 @@
 package redis
 
 import (
+	"fmt"
 	"os"
 	"reflect"
 	"testing"
@@ -35,12 +36,12 @@ func (suite *RedisTestSuite) SetupTest() {
 
 	suite.adapter = NewAdapter(&RingOptions{
 		Addrs: map[string]string{
-			"server": host + ":" + port,
+			"server": fmt.Sprintf("%s:%s", host, port),
 		},
 	})
 }
 
-func (suite *RedisTestSuite) TestSet() {
+func (suite *RedisTestSuite) Test() {
 	testsSet := []struct {
 		name     string
 		key      uint64
@@ -79,9 +80,7 @@ func (suite *RedisTestSuite) TestSet() {
 			assert.NoError(t, err)
 		})
 	}
-}
 
-func (suite *RedisTestSuite) TestGet() {
 	testsGet := []struct {
 		name string
 		key  uint64
@@ -122,9 +121,7 @@ func (suite *RedisTestSuite) TestGet() {
 			}
 		})
 	}
-}
 
-func (suite *RedisTestSuite) TestRelease() {
 	testsRelease := []struct {
 		name string
 		key  uint64
