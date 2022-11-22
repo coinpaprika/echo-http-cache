@@ -7,11 +7,20 @@ import (
 	"time"
 
 	cache "github.com/coinpaprika/echo-http-cache"
+	"github.com/stretchr/testify/suite"
 )
 
 var a cache.Adapter
 
-func TestSet(t *testing.T) {
+type RedisTestSuite struct {
+	suite.Suite
+}
+
+func TestRedisTestSuite(t *testing.T) {
+	suite.Run(t, new(RedisTestSuite))
+}
+
+func (suite *RedisTestSuite) Test1Set() {
 	host := os.Getenv("REDIS_HOST")
 	if host == "" {
 		host = "server"
@@ -22,7 +31,7 @@ func TestSet(t *testing.T) {
 		port = "6379"
 	}
 
-	t.Logf("Using REDIS host: %s port: %s", host, port)
+	suite.T().Logf("Using REDIS host: %s port: %s", host, port)
 
 	a = NewAdapter(&RingOptions{
 		Addrs: map[string]string{
@@ -61,13 +70,13 @@ func TestSet(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		suite.T().Run(tt.name, func(t *testing.T) {
 			a.Set(tt.key, tt.response, time.Now().Add(1*time.Minute))
 		})
 	}
 }
 
-func TestGet(t *testing.T) {
+func (suite *RedisTestSuite) Test2Get() {
 	tests := []struct {
 		name string
 		key  uint64
@@ -94,7 +103,7 @@ func TestGet(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		suite.T().Run(tt.name, func(t *testing.T) {
 			b, ok := a.Get(tt.key)
 			if ok != tt.ok {
 				t.Errorf("memory.Get() ok = %v, tt.ok %v", ok, tt.ok)
@@ -108,7 +117,7 @@ func TestGet(t *testing.T) {
 	}
 }
 
-func TestRelease(t *testing.T) {
+func (suite *RedisTestSuite) Test3Release() {
 	tests := []struct {
 		name string
 		key  uint64
@@ -131,7 +140,7 @@ func TestRelease(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		suite.T().Run(tt.name, func(t *testing.T) {
 			a.Release(tt.key)
 			if _, ok := a.Get(tt.key); ok {
 				t.Errorf("memory.Release() error; key %v should not be found", tt.key)
