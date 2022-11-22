@@ -39,8 +39,8 @@ func (suite *RedisTestSuite) SetupTest() {
 	})
 }
 
-func (suite *RedisTestSuite) Test1() {
-	tests := []struct {
+func (suite *RedisTestSuite) Test() {
+	testsSet := []struct {
 		name     string
 		key      uint64
 		response []byte
@@ -70,15 +70,13 @@ func (suite *RedisTestSuite) Test1() {
 			}.Bytes(),
 		},
 	}
-	for _, tt := range tests {
+	for _, tt := range testsSet {
 		suite.T().Run(tt.name, func(t *testing.T) {
 			suite.adapter.Set(tt.key, tt.response, time.Now().Add(1*time.Minute))
 		})
 	}
-}
 
-func (suite *RedisTestSuite) Test2() {
-	tests := []struct {
+	testsGet := []struct {
 		name string
 		key  uint64
 		want []byte
@@ -103,7 +101,7 @@ func (suite *RedisTestSuite) Test2() {
 			false,
 		},
 	}
-	for _, tt := range tests {
+	for _, tt := range testsGet {
 		suite.T().Run(tt.name, func(t *testing.T) {
 			b, ok := suite.adapter.Get(tt.key)
 			if ok != tt.ok {
@@ -116,10 +114,8 @@ func (suite *RedisTestSuite) Test2() {
 			}
 		})
 	}
-}
 
-func (suite *RedisTestSuite) Test3() {
-	tests := []struct {
+	testsRelease := []struct {
 		name string
 		key  uint64
 	}{
@@ -140,7 +136,7 @@ func (suite *RedisTestSuite) Test3() {
 			4,
 		},
 	}
-	for _, tt := range tests {
+	for _, tt := range testsRelease {
 		suite.T().Run(tt.name, func(t *testing.T) {
 			suite.adapter.Release(tt.key)
 			if _, ok := suite.adapter.Get(tt.key); ok {
