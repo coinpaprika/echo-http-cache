@@ -28,9 +28,8 @@ func NewAdapter(opts ...AdapterOptions) (*Adapter, error) {
 		}
 	}
 
-	badgerOpts := badger.DefaultOptions(a.directory)
-	badgerOpts.IndexCacheSize = 100_000_000 // 100 Mb
-	db, err := badger.Open(badgerOpts)
+	db, err := badger.Open(badger.DefaultOptions(a.directory).
+		WithIndexCacheSize(100_000_000))
 	if err != nil {
 		return nil, err
 	}
