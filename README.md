@@ -27,7 +27,9 @@ import (
 
 func main() {
 	memoryAdapter, err := memory.NewAdapter(
-		// after reaching the capacity, items are not cached until the background goroutine makes the space
+		// after reaching the capacity, items are not cached 
+		// until the next cleaning goroutine makes the space
+		// this is a protection against cache pollution attacks
 		memory.WithCapacity(10_000),  
 	) 
 	if err != nil {
