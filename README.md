@@ -54,7 +54,7 @@ func main() {
 }
 ```
 
-Example of Client initialization with Redis adapter:
+Example of Client initialization with REDIS adapter:
 ```go
 import (
     "github.com/coinpaprika/echo-http-cache"
@@ -73,9 +73,24 @@ import (
         cache.ClientWithTTL(10 * time.Minute),
         cache.ClientWithRefreshKey("opn"),
     )
-
 ...
 ```
+
+Example of Client initialization with disk based adapter using [Badger](https://github.com/dgraph-io/badger/):
+```go
+import (
+    "github.com/coinpaprika/echo-http-cache"
+    "github.com/coinpaprika/echo-http-cache/adapter/disk"
+)
+
+...
+    cacheClient := cache.NewClient(
+        // leave empty for default directory './badger'. Directory will be created if not exist.
+        cache.ClientWithAdapter(disk.NewAdapter(disk.WithDirectory("./tmp/badger"))), 
+        cache.ClientWithTTL(10 * time.Minute),
+        cache.ClientWithRefreshKey("opn"),
+    )
+...
 
 ## License
 echo-http-cache is released under the [MIT License](https://github.com/SporkHubr/echo-http-cache/blob/master/LICENSE).
