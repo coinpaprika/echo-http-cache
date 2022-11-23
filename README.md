@@ -26,7 +26,10 @@ import (
 )
 
 func main() {
-	memoryAdapter, err := memory.NewAdapter()
+	memoryAdapter, err := memory.NewAdapter(
+		// after reaching the capacity, items are not cached until the background goroutine makes the space
+		memory.WithCapacity(10_000),  
+	) 
 	if err != nil {
 		log.Fatal(err)
 	}
