@@ -10,16 +10,16 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
-type GocacheTestSuite struct {
+type MemoryTestSuite struct {
 	suite.Suite
 	adapter cache.Adapter
 }
 
-func TestGocacheTestSuite(t *testing.T) {
-	suite.Run(t, new(GocacheTestSuite))
+func TestMemoryTestSuite(t *testing.T) {
+	suite.Run(t, new(MemoryTestSuite))
 }
 
-func (suite *GocacheTestSuite) SetupTest() {
+func (suite *MemoryTestSuite) SetupTest() {
 	var err error
 	suite.adapter, err = NewAdapter()
 	if err != nil {
@@ -27,7 +27,7 @@ func (suite *GocacheTestSuite) SetupTest() {
 	}
 }
 
-func (suite *GocacheTestSuite) Test() {
+func (suite *MemoryTestSuite) Test() {
 	testsSet := []struct {
 		name     string
 		key      uint64

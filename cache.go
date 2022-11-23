@@ -230,7 +230,7 @@ func (client *Client) isAllowedPathToCache(URL string) bool {
 func BytesToResponse(b []byte) Response {
 	var r Response
 	dec := gob.NewDecoder(bytes.NewReader(b))
-	if err := dec.Decode(&r); err != nil {
+	if err := dec.Decode(&r); err != nil && err != io.EOF {
 		log.Error(err)
 	}
 

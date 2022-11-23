@@ -10,16 +10,16 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
-type GocacheTestSuite struct {
+type DiskTestSuite struct {
 	suite.Suite
 	adapter cache.Adapter
 }
 
-func TestGocacheTestSuite(t *testing.T) {
-	suite.Run(t, new(GocacheTestSuite))
+func TestDiskTestSuite(t *testing.T) {
+	suite.Run(t, new(DiskTestSuite))
 }
 
-func (suite *GocacheTestSuite) SetupTest() {
+func (suite *DiskTestSuite) SetupTest() {
 	var err error
 	suite.adapter, err = NewAdapter()
 	if err != nil {
@@ -27,7 +27,7 @@ func (suite *GocacheTestSuite) SetupTest() {
 	}
 }
 
-func (suite *GocacheTestSuite) Test() {
+func (suite *DiskTestSuite) Test() {
 	testsSet := []struct {
 		name     string
 		key      uint64
