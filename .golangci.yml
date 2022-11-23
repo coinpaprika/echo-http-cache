@@ -8,6 +8,7 @@ linters:
     - asciicheck
     - bodyclose
     - durationcheck
+    - errcheck
     - errorlint
     - forbidigo
     - goimports

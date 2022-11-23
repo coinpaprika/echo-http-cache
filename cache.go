@@ -41,6 +41,7 @@ import (
 	"time"
 
 	"github.com/labstack/echo/v4"
+	"github.com/labstack/gommon/log"
 )
 
 // Response is the cached response data structure.
@@ -116,8 +117,7 @@ func (client *Client) Middleware() echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
 			if !client.isAllowedPathToCache(c.Request().URL.String()) {
-				next(c)
-				return nil
+				return next(c)
 			}
 			if client.cacheableMethod(c.Request().Method) {
 				sortURLParams(c.Request().URL)
@@ -126,8 +126,7 @@ func (client *Client) Middleware() echo.MiddlewareFunc {
 					body, err := io.ReadAll(c.Request().Body)
 					defer c.Request().Body.Close()
 					if err != nil {
-						next(c)
-						return nil // nolint
+						return next(c)
 					}
 					reader := io.NopCloser(bytes.NewBuffer(body))
 					key = generateKeyWithBody(c.Request().URL.String(), body)
@@ -141,7 +140,9 @@ func (client *Client) Middleware() echo.MiddlewareFunc {
 					c.Request().URL.RawQuery = params.Encode()
 					key = generateKey(c.Request().URL.String())
 
-					client.adapter.Release(key)
+					if err := client.adapter.Release(key); err != nil {
+						log.Error(err)
+					}
 				} else {
 					b, ok := client.adapter.Get(key)
 					response := BytesToResponse(b)
@@ -149,18 +150,22 @@ func (client *Client) Middleware() echo.MiddlewareFunc {
 						if response.Expiration.After(time.Now()) {
 							response.LastAccess = time.Now()
 							response.Frequency++
-							client.adapter.Set(key, response.Bytes(), response.Expiration)
+							if err := client.adapter.Set(key, response.Bytes(), response.Expiration); err != nil {
+								log.Error(err)
+							}
 
 							// w.WriteHeader(http.StatusNotModified)
 							for k, v := range response.Header {
 								c.Response().Header().Set(k, strings.Join(v, ","))
 							}
 							c.Response().WriteHeader(http.StatusOK)
-							c.Response().Write(response.Value)
-							return nil
+							_, err := c.Response().Write(response.Value)
+							return err
 						}
 
-						client.adapter.Release(key)
+						if err := client.adapter.Release(key); err != nil {
+							log.Error(err)
+						}
 					}
 				}
 
@@ -184,7 +189,9 @@ func (client *Client) Middleware() echo.MiddlewareFunc {
 						LastAccess: now,
 						Frequency:  1,
 					}
-					client.adapter.Set(key, response.Bytes(), response.Expiration)
+					if err := client.adapter.Set(key, response.Bytes(), response.Expiration); err != nil {
+						log.Error(err)
+					}
 				}
 				// for k, v := range writer.Header() {
 				//	c.Response().Header().Set(k, strings.Join(v, ","))
@@ -223,7 +230,9 @@ func (client *Client) isAllowedPathToCache(URL string) bool {
 func BytesToResponse(b []byte) Response {
 	var r Response
 	dec := gob.NewDecoder(bytes.NewReader(b))
-	dec.Decode(&r)
+	if err := dec.Decode(&r); err != nil {
+		log.Error(err)
+	}
 
 	return r
 }
@@ -232,7 +241,9 @@ func BytesToResponse(b []byte) Response {
 func (r Response) Bytes() []byte {
 	var b bytes.Buffer
 	enc := gob.NewEncoder(&b)
-	enc.Encode(&r)
+	if err := enc.Encode(&r); err != nil {
+		log.Error(err)
+	}
 
 	return b.Bytes()
 }
