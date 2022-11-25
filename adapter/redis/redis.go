@@ -31,28 +31,40 @@ import (
 	cache "github.com/coinpaprika/echo-http-cache"
 	redisCache "github.com/go-redis/cache/v8"
 	"github.com/go-redis/redis/v8"
+	"github.com/labstack/gommon/log"
 )
 
-// Adapter is the memory adapter data structure.
-type Adapter struct {
-	store *redisCache.Cache
-}
-
-// RingOptions exports go-redis RingOptions type.
-type RingOptions redis.RingOptions
+type (
+	Adapter struct {
+		store *redisCache.Cache
+		debug bool
+	}
+	AdapterOptions func(a *Adapter)
+	RingOptions    redis.RingOptions
+)
 
 // Get implements the cache Adapter interface Get method.
 func (a *Adapter) Get(key uint64) ([]byte, bool) {
 	var c []byte
 	if err := a.store.Get(context.Background(), cache.KeyAsString(key), &c); err == nil {
+		if a.debug {
+			log.Infof("[redis][get] key: %s, from cache: true", cache.KeyAsString(key))
+		}
 		return c, true
 	}
 
+	if a.debug {
+		log.Infof("[redis][get] key: %s, from cache: false", cache.KeyAsString(key))
+	}
 	return nil, false
 }
 
 // Set implements the cache Adapter interface Set method.
 func (a *Adapter) Set(key uint64, response []byte, expiration time.Time) error {
+	if a.debug {
+		log.Infof("[redis][set] key: %s, duration: %s", cache.KeyAsString(key), time.Until(expiration))
+	}
+
 	return a.store.Set(&redisCache.Item{
 		Key:   cache.KeyAsString(key),
 		Value: response,
@@ -62,15 +74,32 @@ func (a *Adapter) Set(key uint64, response []byte, expiration time.Time) error {
 
 // Release implements the cache Adapter interface Release method.
 func (a *Adapter) Release(key uint64) error {
+	if a.debug {
+		log.Infof("[redis][delete] key: %s", cache.KeyAsString(key))
+	}
+
 	return a.store.Delete(context.Background(), cache.KeyAsString(key))
 }
 
 // NewAdapter initializes Redis adapter.
-func NewAdapter(opt *RingOptions) cache.Adapter {
+func NewAdapter(opt *RingOptions, opts ...AdapterOptions) cache.Adapter {
 	ropt := redis.RingOptions(*opt)
-	return &Adapter{
-		redisCache.New(&redisCache.Options{
+	adapter := &Adapter{
+		store: redisCache.New(&redisCache.Options{
 			Redis: redis.NewRing(&ropt),
 		}),
+		debug: false,
+	}
+
+	for _, opt := range opts {
+		opt(adapter)
+	}
+
+	return adapter
+}
+
+func WithDebug(debug bool) AdapterOptions {
+	return func(a *Adapter) {
+		a.debug = debug
 	}
 }
