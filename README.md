@@ -92,6 +92,28 @@ import (
     )
 ```
 
+## Adapters selection guide
+### `Memory`
+- local environments
+- production single & multi node environments
+- short-lived objects < 5min
+- cheap underlying operations' avg(exec time) < 300ms
+- low number of entries: < 1M & 1Gb in size
+- memory safe (when used with `WithCapacity` option)
+
+### `Disk`
+- production single & multi node environments 
+- short-lived objects < 10min
+- cheap underlying operations' avg(exec time) < 300ms
+- always memory safe, disk space is used extensively 
+- large number of entries > 1M & >1 Gb in size (up to full size of a disk)
+
+### `Redis`
+- production multi node environments
+- long-lived objects > 10min
+- expensive underlying operations' avg(exec time) > 300ms 
+- large number of entries > 1M & >1 Gb in size (up to full size of a disk)
+
 ## License
 echo-http-cache is released under the [MIT License](https://github.com/SporkHubr/echo-http-cache/blob/master/LICENSE).
 
