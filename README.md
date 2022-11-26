@@ -10,9 +10,11 @@ It is simple, superfast, thread safe and gives the possibility to choose the ada
 `go get github.com/coinpaprika/echo-http-cache`
 
 ### Usage
-This is an example of use with the memory adapter: 
-Other example available at [example](./example/main.go) can by run by `go run ./example/main.go`
+Full example is available at [example](./example/main.go) can be run by:
 
+`go run ./example/main.go`
+
+Example of use with the memory adapter:
 ```go
 package main
 
