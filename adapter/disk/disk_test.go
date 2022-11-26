@@ -141,3 +141,12 @@ func (suite *DiskTestSuite) Test() {
 		})
 	}
 }
+
+var adapter, _ = NewAdapter(WithDirectory("./tmp/cache"))
+
+func BenchmarkSet(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		_ = adapter.Set(uint64(i), make([]byte, 100), time.Now().Add(1*time.Minute))
+		adapter.Get(uint64(i))
+	}
+}

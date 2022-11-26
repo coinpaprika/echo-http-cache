@@ -154,3 +154,15 @@ func (suite *RedisTestSuite) Test() {
 		})
 	}
 }
+
+var adapter = NewAdapter(&RingOptions{
+	Addrs: map[string]string{
+		"server": fmt.Sprintf("%s:%s", "localhost", "6379"),
+	},
+})
+
+func BenchmarkSet(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		_ = adapter.Set(uint64(i), make([]byte, 100), time.Now().Add(1*time.Minute))
+	}
+}

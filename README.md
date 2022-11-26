@@ -10,7 +10,8 @@ It is simple, superfast, thread safe and gives the possibility to choose the ada
 `go get github.com/coinpaprika/echo-http-cache`
 
 ### Usage
-This is an example of use with the memory adapter:
+This is an example of use with the memory adapter: 
+Other example available at [example](./example/main.go) can by run by `go run ./example/main.go`
 
 ```go
 package main
@@ -76,7 +77,7 @@ import (
 ...
 ```
 
-Example of Client initialization with disk based adapter using [Badger](https://github.com/dgraph-io/badger/):
+Example of Client initialization with disk based adapter using [diskv](https://github.com/peterbourgon/diskv):
 ```go
 import (
     "github.com/coinpaprika/echo-http-cache"
@@ -85,8 +86,8 @@ import (
 
 ...
     cacheClient := cache.NewClient(
-        // leave empty for default directory './badger'. Directory will be created if not exist.
-        cache.ClientWithAdapter(disk.NewAdapter(disk.WithDirectory("./tmp/badger"))), 
+        // leave empty for default directory './cache'. Directory will be created if not exist.
+        cache.ClientWithAdapter(disk.NewAdapter(disk.WithDirectory("./tmp/cache"), disk.WithMaxMemorySize(50_000_000))), 
         cache.ClientWithTTL(10 * time.Minute),
         cache.ClientWithRefreshKey("opn"),
     )
@@ -96,17 +97,18 @@ import (
 ### `Memory`
 - local environments
 - production single & multi node environments
-- short-lived objects < 5min
-- cheap underlying operations' avg(exec time) < 300ms
-- low number of entries: < 1M & 1Gb in size
+- short-lived objects < 3min
+- cheap underlying operations' avg(exec time) < 100ms
+- low number of entries: < 1M & < 1Gb in size
 - memory safe (when used with `WithCapacity` option)
 
 ### `Disk`
 - production single & multi node environments 
-- short-lived objects < 10min
+- short-lived to medium-lived objects < 10min
 - cheap underlying operations' avg(exec time) < 300ms
-- always memory safe, disk space is used extensively 
-- large number of entries > 1M & >1 Gb in size (up to full size of a disk)
+- always memory safe, disk space is used extensively
+- some entries are cached in memory for performance - controlled by WithMaxMemorySize() settings, default 100Mb
+- large number of entries > 1M & > 1 Gb in size (up to full size of a disk)
 
 ### `Redis`
 - production multi node environments
