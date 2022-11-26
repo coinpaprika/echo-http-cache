@@ -115,7 +115,7 @@ import (
 ### `Redis`
 - production multi node environments
 - long-lived objects > 10min
-- expensive underlying operations' avg(exec time) > 300ms 
+- expensive underlying operations' avg(exec time) > 300ms, benefit from sharing across multi nodes
 - large number of entries > 1M & >1 Gb in size (up to full size of a disk)
 
 ## License
