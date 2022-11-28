@@ -98,6 +98,7 @@ import (
 ## Adapters selection guide
 ### `Memory`
 - local environments
+- high cache hit ratio
 - production single & multi node environments
 - short-lived objects < 3min
 - cheap underlying operations' avg(exec time) < 300ms
@@ -105,7 +106,8 @@ import (
 - memory safe (when used with `WithCapacity` option)
 
 ### `Disk`
-- fast / not heavily-used disk
+- SSD disks
+- high cache hit ratio
 - production single & multi node environments
 - short-lived to medium-lived objects < 12hr
 - cheap underlying operations' avg(exec time) < 300ms
@@ -115,6 +117,7 @@ import (
 
 ### `Redis`
 - production multi node environments
+- low to high cache hit ratio
 - short-lived to long-lived objects > 10 min
 - expensive underlying operations' avg(exec time) > 300ms, benefit from sharing across multi nodes
 - large number of entries > 1M & >1 Gb in size (up to full size of a disk)
