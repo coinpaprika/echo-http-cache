@@ -100,13 +100,13 @@ import (
 - local environments
 - production single & multi node environments
 - short-lived objects < 3min
-- cheap underlying operations' avg(exec time) < 100ms
+- cheap underlying operations' avg(exec time) < 300ms
 - low number of entries: < 1M & < 1Gb in size
 - memory safe (when used with `WithCapacity` option)
 
 ### `Disk`
 - production single & multi node environments 
-- short-lived to medium-lived objects < 10min
+- short-lived to medium-lived objects < 12hr
 - cheap underlying operations' avg(exec time) < 300ms
 - always memory safe, disk space is used extensively
 - some entries are cached in memory for performance - controlled by WithMaxMemorySize() settings, default 100Mb
@@ -114,7 +114,7 @@ import (
 
 ### `Redis`
 - production multi node environments
-- long-lived objects > 10min
+- short-lived to long-lived objects > 10 min
 - expensive underlying operations' avg(exec time) > 300ms, benefit from sharing across multi nodes
 - large number of entries > 1M & >1 Gb in size (up to full size of a disk)
 
