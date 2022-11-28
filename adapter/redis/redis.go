@@ -65,10 +65,17 @@ func (a *Adapter) Set(key uint64, response []byte, expiration time.Time) error {
 		log.Infof("[redis][set] key: %s, duration: %s", cache.KeyAsString(key), time.Until(expiration))
 	}
 
+	ttl := time.Until(expiration)
+	if ttl.Seconds() <= 1 {
+		// REDIS TTL has to be > 1s
+		// otherwise warning is generated: `2022/11/28 11:37:00 too short TTL for key="2bsunt0a1fan6": 808.586939ms`
+		ttl = 1 * time.Second
+	}
+
 	return a.store.Set(&redisCache.Item{
 		Key:   cache.KeyAsString(key),
 		Value: response,
-		TTL:   time.Until(expiration),
+		TTL:   ttl,
 	})
 }
 
