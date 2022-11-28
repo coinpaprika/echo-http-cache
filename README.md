@@ -105,7 +105,8 @@ import (
 - memory safe (when used with `WithCapacity` option)
 
 ### `Disk`
-- production single & multi node environments 
+- fast / not heavily-used disk
+- production single & multi node environments
 - short-lived to medium-lived objects < 12hr
 - cheap underlying operations' avg(exec time) < 300ms
 - always memory safe, disk space is used extensively
