@@ -5,7 +5,7 @@ go 1.19
 require (
 	github.com/go-redis/cache/v8 v8.0.0-beta.11
 	github.com/go-redis/redis/v8 v8.0.0-beta.5
-	github.com/labstack/echo/v4 v4.9.1
+	github.com/labstack/echo/v4 v4.10.0
 	github.com/labstack/gommon v0.4.0
 	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/peterbourgon/diskv v2.0.1+incompatible
@@ -34,10 +34,10 @@ require (
 	github.com/vmihailenco/tagparser v0.1.1 // indirect
 	go.opentelemetry.io/otel v0.7.0 // indirect
 	golang.org/x/crypto v0.3.0 // indirect
-	golang.org/x/net v0.2.0 // indirect
+	golang.org/x/net v0.4.0 // indirect
 	golang.org/x/sync v0.0.0-20201020160332-67f06af15bc9 // indirect
-	golang.org/x/sys v0.2.0 // indirect
-	golang.org/x/text v0.4.0 // indirect
+	golang.org/x/sys v0.3.0 // indirect
+	golang.org/x/text v0.5.0 // indirect
 	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1 // indirect
 	google.golang.org/appengine v1.6.6 // indirect
 	google.golang.org/grpc v1.30.0 // indirect
