@@ -21,7 +21,6 @@ require (
 	github.com/golang/protobuf v1.4.2 // indirect
 	github.com/golang/snappy v0.0.3 // indirect
 	github.com/google/btree v1.1.2 // indirect
-	github.com/google/go-cmp v0.5.4 // indirect
 	github.com/klauspost/compress v1.12.3 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.16 // indirect
@@ -34,11 +33,11 @@ require (
 	github.com/vmihailenco/tagparser v0.1.1 // indirect
 	go.opentelemetry.io/otel v0.7.0 // indirect
 	golang.org/x/crypto v0.3.0 // indirect
+	golang.org/x/exp v0.0.0-20230817173708-d852ddb80c63
 	golang.org/x/net v0.2.0 // indirect
 	golang.org/x/sync v0.0.0-20201020160332-67f06af15bc9 // indirect
-	golang.org/x/sys v0.2.0 // indirect
+	golang.org/x/sys v0.11.0 // indirect
 	golang.org/x/text v0.4.0 // indirect
-	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1 // indirect
 	google.golang.org/appengine v1.6.6 // indirect
 	google.golang.org/grpc v1.30.0 // indirect
 	google.golang.org/protobuf v1.25.0 // indirect

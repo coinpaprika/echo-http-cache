@@ -13,6 +13,8 @@ import (
 	"time"
 
 	"github.com/labstack/echo/v4"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 type adapterMock struct {
@@ -83,6 +85,7 @@ func TestMiddleware(t *testing.T) {
 		ClientWithTTL(1*time.Minute),
 		ClientWithRefreshKey("rk"),
 		ClientWithMethods([]string{http.MethodGet, http.MethodPost}),
+		ClientWithRestrictedPaths([]string{"/restricted", "/another/:id/restricted"}),
 	)
 
 	middleware := client.Middleware()
@@ -225,6 +228,82 @@ func TestMiddleware(t *testing.T) {
 				t.Errorf("*Client.Middleware() = %v, want %v", rec.Body.String(), tt.wantBody)
 			}
 		})
+	}
+}
+
+func TestRestrictedPaths(t *testing.T) {
+
+	tests := []struct {
+		name        string
+		url         string
+		method      string
+		handlerPath string
+		restricted  bool
+	}{
+		{
+			name:        "restricted with path value",
+			url:         "/another/10/path",
+			handlerPath: "/another/:id/path",
+			method:      http.MethodGet,
+			restricted:  true,
+		},
+		{
+			name:        "restricted path",
+			url:         "/restricted",
+			handlerPath: "/restricted",
+			method:      http.MethodGet,
+			restricted:  true,
+		},
+		{
+			name:        "restricted with query param",
+			url:         "/restricted?foo=barr",
+			handlerPath: "/restricted",
+			method:      http.MethodGet,
+			restricted:  true,
+		},
+		{
+			name:        "not restricted path",
+			url:         "/not-restricted",
+			handlerPath: "/not-restricted",
+			method:      http.MethodGet,
+			restricted:  false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			e := echo.New()
+
+			adapter := &adapterMock{
+				store: map[uint64][]byte{},
+			}
+
+			client, _ := NewClient(
+				ClientWithAdapter(adapter),
+				ClientWithTTL(1*time.Minute),
+				ClientWithRefreshKey("rk"),
+				ClientWithMethods([]string{http.MethodGet, http.MethodPost}),
+				ClientWithRestrictedPaths([]string{"/restricted", "/another/:id/path"}),
+			)
+
+			rec := httptest.NewRecorder()
+			e.Use(client.Middleware())
+			e.Add(http.MethodGet, tt.handlerPath, func(c echo.Context) error {
+				return c.NoContent(http.StatusOK)
+			})
+
+			req, err := http.NewRequest(tt.method, tt.url, nil)
+			require.NoError(t, err)
+
+			e.Server.Handler.ServeHTTP(rec, req)
+
+			if tt.restricted {
+				assert.Len(t, adapter.store, 0)
+			} else {
+				assert.GreaterOrEqual(t, len(adapter.store), 1)
+			}
+		})
+
 	}
 }
 

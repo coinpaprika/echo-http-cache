@@ -42,6 +42,7 @@ import (
 
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/gommon/log"
+	"golang.org/x/exp/slices"
 )
 
 // Response is the cached response data structure.
@@ -116,7 +117,8 @@ type Adapter interface {
 func (client *Client) Middleware() echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
-			if !client.isAllowedPathToCache(c.Request().URL.String()) {
+			p := c.Path()
+			if slices.Contains(client.restrictedPaths, p) {
 				return next(c)
 			}
 			if client.cacheableMethod(c.Request().Method) {
@@ -215,15 +217,6 @@ func (client *Client) cacheableMethod(method string) bool {
 		}
 	}
 	return false
-}
-
-func (client *Client) isAllowedPathToCache(URL string) bool {
-	for _, p := range client.restrictedPaths {
-		if strings.Contains(URL, p) {
-			return false
-		}
-	}
-	return true
 }
 
 // BytesToResponse converts bytes array into Response data structure.
