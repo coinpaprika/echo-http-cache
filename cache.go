@@ -117,8 +117,7 @@ type Adapter interface {
 func (client *Client) Middleware() echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
-			p := c.Path()
-			if slices.Contains(client.restrictedPaths, p) {
+			if slices.Contains(client.restrictedPaths, c.Path()) {
 				return next(c)
 			}
 			if client.cacheableMethod(c.Request().Method) {
