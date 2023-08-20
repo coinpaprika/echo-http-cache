@@ -33,7 +33,7 @@ func (a *adapterMock) Get(key uint64) ([]byte, bool) {
 	return nil, false
 }
 
-func (a *adapterMock) Set(key uint64, response []byte, expiration time.Time) error {
+func (a *adapterMock) Set(key uint64, response []byte, _ time.Time) error {
 	a.Lock()
 	defer a.Unlock()
 	a.store[key] = response
@@ -47,7 +47,7 @@ func (a *adapterMock) Release(key uint64) error {
 	return nil
 }
 
-func (errReader) Read(p []byte) (n int, err error) {
+func (errReader) Read(_ []byte) (n int, err error) {
 	return 0, errors.New("readAll error")
 }
 
@@ -232,7 +232,6 @@ func TestMiddleware(t *testing.T) {
 }
 
 func TestRestrictedPaths(t *testing.T) {
-
 	tests := []struct {
 		name        string
 		url         string
@@ -303,7 +302,6 @@ func TestRestrictedPaths(t *testing.T) {
 				assert.GreaterOrEqual(t, len(adapter.store), 1)
 			}
 		})
-
 	}
 }
 
