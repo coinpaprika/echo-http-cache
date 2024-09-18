@@ -12,6 +12,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/coinpaprika/echo-http-cache/adapter/memory"
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -230,6 +231,51 @@ func TestMiddleware(t *testing.T) {
 		})
 	}
 }
+
+func TestCorsHeaders(t *testing.T) {
+	e := echo.New()
+
+	handler := func(c echo.Context) error {
+		return c.String(http.StatusOK, "ok")
+	}
+	memoryAdapter, err := memory.NewAdapter()
+	require.NoError(t, err)
+
+	client, _ := NewClient(
+		ClientWithAdapter(memoryAdapter),
+		ClientWithTTL(1*time.Minute),
+	)
+
+	cacheMiddleware := client.Middleware()
+
+	req, err := http.NewRequest(http.MethodGet, "/test", nil)
+	require.NoError(t, err)
+	rec := httptest.NewRecorder()
+
+	// simulate CORS middleware
+	rec.Header().Add("Access-Control-Allow-Origin", "http://localhost:8181")
+	rec.Header().Add("Access-Control-Allow-Credentials", "true")
+
+	c := e.NewContext(req, rec)
+	_ = cacheMiddleware(handler)(c)
+
+	assert.Equal(t, "http://localhost:8181", rec.Header().Get("Access-Control-Allow-Origin"))
+	assert.Equal(t, "true", rec.Header().Get("Access-Control-Allow-Credentials"))
+
+	secondRec := httptest.NewRecorder()
+
+	// simulate CORS middleware
+	secondRec.Header().Add("Access-Control-Allow-Origin", "http://coinpaprika.com")
+	secondRec.Header().Add("Access-Control-Allow-Credentials", "true")
+
+	secondC := e.NewContext(req, secondRec)
+	_ = cacheMiddleware(handler)(secondC)
+
+	assert.Equal(t, "http://coinpaprika.com", secondRec.Header().Get("Access-Control-Allow-Origin"))
+	assert.Equal(t, "true", secondRec.Header().Get("Access-Control-Allow-Credentials"))
+	time.Sleep(time.Second)
+}
+
 
 func TestRestrictedPaths(t *testing.T) {
 	tests := []struct {

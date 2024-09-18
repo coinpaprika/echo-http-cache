@@ -146,8 +146,9 @@ func (client *Client) Middleware() echo.MiddlewareFunc {
 					}
 				} else {
 					b, ok := client.adapter.Get(key)
-					response := BytesToResponse(b)
 					if ok {
+						response := BytesToResponse(b)
+						response.Header = client.rewriteCorsHeaders(response.Header, c.Response().Header())
 						if response.Expiration.After(time.Now()) {
 							response.LastAccess = time.Now()
 							response.Frequency++
@@ -207,6 +208,19 @@ func (client *Client) Middleware() echo.MiddlewareFunc {
 			return nil
 		}
 	}
+}
+
+func (client *Client) rewriteCorsHeaders(cachedHeaders http.Header, responseHeaders http.Header) http.Header {
+	corsHeaders := []string{
+		"Access-Control-Allow-Origin",
+		"Access-Control-Allow-Credentials",
+	}
+	for _, h := range corsHeaders {
+		if val := responseHeaders.Get(h); val != "" {
+			cachedHeaders.Set(h, val)
+		}
+	}
+	return cachedHeaders
 }
 
 func (client *Client) cacheableMethod(method string) bool {
