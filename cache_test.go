@@ -276,7 +276,6 @@ func TestCorsHeaders(t *testing.T) {
 	time.Sleep(time.Second)
 }
 
-
 func TestRestrictedPaths(t *testing.T) {
 	tests := []struct {
 		name        string
