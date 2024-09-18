@@ -252,6 +252,7 @@ func TestCorsHeaders(t *testing.T) {
 	require.NoError(t, err)
 	rec := httptest.NewRecorder()
 
+	req.Header.Set("Origin", "http://localhost:8181")
 	// simulate CORS middleware
 	rec.Header().Add("Access-Control-Allow-Origin", "http://localhost:8181")
 	rec.Header().Add("Access-Control-Allow-Credentials", "true")
@@ -264,6 +265,7 @@ func TestCorsHeaders(t *testing.T) {
 
 	secondRec := httptest.NewRecorder()
 
+	req.Header.Set("Origin", "http://coinpaprika.com")
 	// simulate CORS middleware
 	secondRec.Header().Add("Access-Control-Allow-Origin", "http://coinpaprika.com")
 	secondRec.Header().Add("Access-Control-Allow-Credentials", "true")
