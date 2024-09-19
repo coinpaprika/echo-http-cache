@@ -122,7 +122,7 @@ func (client *Client) Middleware() echo.MiddlewareFunc {
 			}
 			if client.cacheableMethod(c.Request().Method) {
 				sortURLParams(c.Request().URL)
-				key := generateKey(c.Request().URL.String())
+				key := generateKey(c.Request().URL.String() + c.Request().Header.Get(echo.HeaderOrigin))
 				if c.Request().Method == http.MethodPost && c.Request().Body != nil {
 					body, err := io.ReadAll(c.Request().Body)
 					defer c.Request().Body.Close()
@@ -130,7 +130,7 @@ func (client *Client) Middleware() echo.MiddlewareFunc {
 						return next(c)
 					}
 					reader := io.NopCloser(bytes.NewBuffer(body))
-					key = generateKeyWithBody(c.Request().URL.String(), body)
+					key = generateKeyWithBody(c.Request().URL.String()+c.Request().Header.Get(echo.HeaderOrigin), body)
 					c.Request().Body = reader
 				}
 
@@ -139,15 +139,15 @@ func (client *Client) Middleware() echo.MiddlewareFunc {
 					delete(params, client.refreshKey)
 
 					c.Request().URL.RawQuery = params.Encode()
-					key = generateKey(c.Request().URL.String())
+					key = generateKey(c.Request().URL.String() + c.Request().Header.Get(echo.HeaderOrigin))
 
 					if err := client.adapter.Release(key); err != nil {
 						log.Error(err)
 					}
 				} else {
 					b, ok := client.adapter.Get(key)
-					response := BytesToResponse(b)
 					if ok {
+						response := BytesToResponse(b)
 						if response.Expiration.After(time.Now()) {
 							response.LastAccess = time.Now()
 							response.Frequency++

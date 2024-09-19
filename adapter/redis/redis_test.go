@@ -163,6 +163,10 @@ var adapter = NewAdapter(&RingOptions{
 
 func BenchmarkSet(b *testing.B) {
 	for i := 0; i < b.N; i++ {
+		// prevent cast to uint64 overflow
+		if i < 0 {
+			b.FailNow()
+		}
 		_ = adapter.Set(uint64(i), make([]byte, 100), time.Now().Add(1*time.Minute))
 	}
 }
