@@ -63,6 +63,9 @@ type Response struct {
 	// Frequency is the count of times a cached response is accessed.
 	// Used for LFU and MFU algorithms.
 	Frequency int
+
+	// StatusCode is the HTTP status code of the cached response.
+	StatusCode int
 }
 
 // Client data structure for HTTP cache middleware.
@@ -159,7 +162,14 @@ func (client *Client) Middleware() echo.MiddlewareFunc {
 							for k, v := range response.Header {
 								c.Response().Header().Set(k, strings.Join(v, ","))
 							}
-							c.Response().WriteHeader(http.StatusOK)
+
+							// Backwards compatibility
+							statusCode := response.StatusCode
+							if statusCode == 0 {
+								statusCode = http.StatusOK
+							}
+
+							c.Response().WriteHeader(statusCode)
 							_, err := c.Response().Write(response.Value)
 							return err
 						}
@@ -189,6 +199,7 @@ func (client *Client) Middleware() echo.MiddlewareFunc {
 						Expiration: now.Add(client.ttl),
 						LastAccess: now,
 						Frequency:  1,
+						StatusCode: statusCode,
 					}
 					if err := client.adapter.Set(key, response.Bytes(), response.Expiration); err != nil {
 						log.Error(err)
