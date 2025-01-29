@@ -205,7 +205,6 @@ func (client *Client) Middleware() echo.MiddlewareFunc {
 						log.Error(err)
 					}
 				}
-
 				// for k, v := range writer.Header() {
 				//	c.Response().Header().Set(k, strings.Join(v, ","))
 				// }
