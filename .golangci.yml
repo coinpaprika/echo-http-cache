@@ -1,9 +1,9 @@
+version: "2"
 run:
   concurrency: 4
   timeout: 3m
-
 linters:
-  disable-all: true
+  default: none
   enable:
     - asciicheck
     - bodyclose
@@ -11,26 +11,40 @@ linters:
     - errcheck
     - errorlint
     - forbidigo
-    - goimports
     - gosec
-    - gosimple
     - govet
     - nilerr
     - predeclared
     - revive
     - staticcheck
-    - stylecheck
-    - typecheck
     - unconvert
     - whitespace
-
-linters-settings:
-  forbidigo:
-    forbid:
-      - ^(fmt\.Print.*|print|println)$
-      - ^spew\.Dump$
-      - ^pp\.(P|PP|Sp|Fp)rint?$
-
-issues:
-  exclude:
-    - (.*)should have comment(.+)or be unexported|comment(.+)should be of the form
+  settings:
+    forbidigo:
+      forbid:
+        - pattern: ^(fmt\.Print.*|print|println)$
+        - pattern: ^spew\.Dump$
+        - pattern: ^pp\.(P|PP|Sp|Fp)rint?$
+  exclusions:
+    generated: lax
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
+    rules:
+      - path: (.+)\.go$
+        text: (.*)should have comment(.+)or be unexported|comment(.+)should be of the form
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
+formatters:
+  enable:
+    - goimports
+  exclusions:
+    generated: lax
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
