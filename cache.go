@@ -184,13 +184,16 @@ func (client *Client) Middleware() echo.MiddlewareFunc {
 				mw := io.MultiWriter(c.Response().Writer, resBody)
 				writer := &bodyDumpResponseWriter{Writer: mw, ResponseWriter: c.Response().Writer}
 				c.Response().Writer = writer
-				if err := next(c); err != nil {
+
+				err := next(c)
+				if err != nil {
 					c.Error(err)
 				}
 
 				statusCode := writer.statusCode
 				value := resBody.Bytes()
-				if statusCode < 400 {
+				// Cache only non-error responses. For example, timeouts can result in a 200 status with an empty body.
+				if err == nil && statusCode < 400 {
 					now := time.Now()
 
 					response := Response{
