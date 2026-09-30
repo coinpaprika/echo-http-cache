@@ -77,6 +77,10 @@ type bodyDumpResponseWriter struct {
 	io.Writer
 	http.ResponseWriter
 	statusCode int
+	// writeErr keeps the first error returned while writing the body downstream.
+	// A response whose body could not be fully written must never be cached,
+	// otherwise the truncated (typically empty) copy would be served to everyone.
+	writeErr error
 }
 
 func (w *bodyDumpResponseWriter) WriteHeader(code int) {
@@ -85,7 +89,11 @@ func (w *bodyDumpResponseWriter) WriteHeader(code int) {
 }
 
 func (w *bodyDumpResponseWriter) Write(b []byte) (int, error) {
-	return w.Writer.Write(b)
+	n, err := w.Writer.Write(b)
+	if err != nil && w.writeErr == nil {
+		w.writeErr = err
+	}
+	return n, err
 }
 
 func (w *bodyDumpResponseWriter) Flush() {
@@ -134,7 +142,10 @@ func (client *Client) Middleware() echo.MiddlewareFunc {
 				}
 
 				params := c.Request().URL.Query()
-				if _, ok := params[client.refreshKey]; ok {
+				// An empty refresh key means the feature is disabled. Without this guard a
+				// request with an empty-named query parameter ("?=") would match and let any
+				// caller evict and recompute the canonical cache entry.
+				if _, ok := params[client.refreshKey]; ok && client.refreshKey != "" {
 					delete(params, client.refreshKey)
 
 					c.Request().URL.RawQuery = params.Encode()
@@ -173,13 +184,17 @@ func (client *Client) Middleware() echo.MiddlewareFunc {
 				mw := io.MultiWriter(c.Response().Writer, resBody)
 				writer := &bodyDumpResponseWriter{Writer: mw, ResponseWriter: c.Response().Writer}
 				c.Response().Writer = writer
-				if err := next(c); err != nil {
+				err := next(c)
+				if err != nil {
 					c.Error(err)
 				}
 
 				statusCode := writer.statusCode
 				value := resBody.Bytes()
-				if statusCode < 400 {
+				// Cache only non-error responses that were fully written to the client. A handler
+				// error, a timeout or a client abort can leave a 2xx status with an empty or
+				// truncated body, which must not be stored.
+				if err == nil && writer.writeErr == nil && statusCode < 400 {
 					now := time.Now()
 
 					response := Response{

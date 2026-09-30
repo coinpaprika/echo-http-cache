@@ -57,6 +57,11 @@ func main() {
 }
 ```
 
+Notes on caching behaviour:
+
+- Only responses with a status below 400 are cached, and only when the handler returned no error and the whole body was written to the client. A timeout or a client that disconnects mid-response therefore never leaves an empty or truncated body in the cache.
+- `ClientWithRefreshKey` is optional. When it is not set, no query parameter can evict a cache entry; in particular an empty-named parameter (`?=`) is treated as an ordinary URL.
+
 Example of Client initialization with REDIS adapter:
 ```go
 import (
