@@ -610,3 +610,105 @@ func TestNewClient(t *testing.T) {
 		})
 	}
 }
+
+// failingWriter is a ResponseWriter whose body writes fail, simulating a client
+// that went away or a timeout writer after the deadline.
+type failingWriter struct {
+	http.ResponseWriter
+}
+
+func (w *failingWriter) Write(_ []byte) (int, error) {
+	return 0, errors.New("write: broken pipe")
+}
+
+func TestMiddleware_DoesNotCacheFailedWrite(t *testing.T) {
+	e := echo.New()
+	adapter := &adapterMock{store: map[uint64][]byte{}}
+	client, err := NewClient(ClientWithAdapter(adapter), ClientWithTTL(time.Minute))
+	require.NoError(t, err)
+
+	calls := 0
+	handler := client.Middleware()(func(c echo.Context) error {
+		calls++
+		return c.String(http.StatusOK, fmt.Sprintf("value %d", calls))
+	})
+
+	// First request: the downstream write fails, nothing must be stored.
+	req := httptest.NewRequest(http.MethodGet, "http://foo.bar/coins", nil)
+	rec := httptest.NewRecorder()
+	ctx := e.NewContext(req, &failingWriter{ResponseWriter: rec})
+	require.NoError(t, handler(ctx))
+	assert.Equal(t, 1, calls)
+	assert.Empty(t, adapter.store, "a response with a failed write must not be cached")
+
+	// Second request: served by the handler again, with a full body.
+	req = httptest.NewRequest(http.MethodGet, "http://foo.bar/coins", nil)
+	rec = httptest.NewRecorder()
+	require.NoError(t, handler(e.NewContext(req, rec)))
+	assert.Equal(t, 2, calls)
+	assert.Equal(t, http.StatusOK, rec.Code)
+	assert.Equal(t, "value 2", rec.Body.String())
+	assert.Len(t, adapter.store, 1)
+
+	// Third request: now served from cache.
+	req = httptest.NewRequest(http.MethodGet, "http://foo.bar/coins", nil)
+	rec = httptest.NewRecorder()
+	require.NoError(t, handler(e.NewContext(req, rec)))
+	assert.Equal(t, 2, calls)
+	assert.Equal(t, "value 2", rec.Body.String())
+}
+
+func TestMiddleware_EmptyRefreshKeyIsDisabled(t *testing.T) {
+	e := echo.New()
+	adapter := &adapterMock{store: map[uint64][]byte{}}
+	client, err := NewClient(ClientWithAdapter(adapter), ClientWithTTL(time.Minute))
+	require.NoError(t, err)
+
+	calls := 0
+	handler := client.Middleware()(func(c echo.Context) error {
+		calls++
+		return c.String(http.StatusOK, fmt.Sprintf("value %d", calls))
+	})
+
+	do := func(url string) string {
+		req := httptest.NewRequest(http.MethodGet, url, nil)
+		rec := httptest.NewRecorder()
+		require.NoError(t, handler(e.NewContext(req, rec)))
+		return rec.Body.String()
+	}
+
+	assert.Equal(t, "value 1", do("http://foo.bar/coins"))
+	assert.Equal(t, "value 1", do("http://foo.bar/coins"))
+	assert.Equal(t, 1, calls)
+
+	// "?=" is an empty-named parameter. With no refresh key configured it must not
+	// evict the canonical entry; it is just a different URL and gets its own entry.
+	do("http://foo.bar/coins?=")
+	assert.Equal(t, "value 1", do("http://foo.bar/coins"), "canonical entry must survive a ?= request")
+	assert.Len(t, adapter.store, 2)
+}
+
+func TestMiddleware_ConfiguredRefreshKeyStillWorks(t *testing.T) {
+	e := echo.New()
+	adapter := &adapterMock{store: map[uint64][]byte{}}
+	client, err := NewClient(ClientWithAdapter(adapter), ClientWithTTL(time.Minute), ClientWithRefreshKey("rk"))
+	require.NoError(t, err)
+
+	calls := 0
+	handler := client.Middleware()(func(c echo.Context) error {
+		calls++
+		return c.String(http.StatusOK, fmt.Sprintf("value %d", calls))
+	})
+
+	do := func(url string) string {
+		req := httptest.NewRequest(http.MethodGet, url, nil)
+		rec := httptest.NewRecorder()
+		require.NoError(t, handler(e.NewContext(req, rec)))
+		return rec.Body.String()
+	}
+
+	assert.Equal(t, "value 1", do("http://foo.bar/coins"))
+	assert.Equal(t, "value 2", do("http://foo.bar/coins?rk=1"))
+	assert.Equal(t, "value 2", do("http://foo.bar/coins"))
+	assert.Equal(t, 2, calls)
+}
