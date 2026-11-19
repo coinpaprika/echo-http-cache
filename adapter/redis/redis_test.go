@@ -14,11 +14,24 @@ import (
 
 type RedisTestSuite struct {
 	suite.Suite
-	adapter cache.Adapter
+	newAdapter func(addr string) cache.Adapter
+	adapter    cache.Adapter
 }
 
 func TestRedisTestSuite(t *testing.T) {
-	suite.Run(t, new(RedisTestSuite))
+	suite.Run(t, &RedisTestSuite{newAdapter: func(addr string) cache.Adapter {
+		return NewAdapter(&RingOptions{
+			Addrs: map[string]string{
+				"server": addr,
+			},
+		})
+	}})
+}
+
+func TestRedisClientTestSuite(t *testing.T) {
+	suite.Run(t, &RedisTestSuite{newAdapter: func(addr string) cache.Adapter {
+		return NewClientAdapter(&ClientOptions{Addr: addr})
+	}})
 }
 
 func (suite *RedisTestSuite) SetupTest() {
@@ -33,11 +46,7 @@ func (suite *RedisTestSuite) SetupTest() {
 
 	suite.T().Logf("Using REDIS host: %s port: %s", host, port)
 
-	suite.adapter = NewAdapter(&RingOptions{
-		Addrs: map[string]string{
-			"server": fmt.Sprintf("%s:%s", host, port),
-		},
-	})
+	suite.adapter = suite.newAdapter(fmt.Sprintf("%s:%s", host, port))
 }
 
 func (suite *RedisTestSuite) Test() {

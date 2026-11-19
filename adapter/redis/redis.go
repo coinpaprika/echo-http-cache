@@ -41,6 +41,7 @@ type (
 	}
 	AdapterOptions func(a *Adapter)
 	RingOptions    redis.RingOptions
+	ClientOptions  redis.Options
 )
 
 // Get implements the cache Adapter interface Get method.
@@ -88,12 +89,27 @@ func (a *Adapter) Release(key uint64) error {
 	return a.store.Delete(context.Background(), cache.KeyAsString(key))
 }
 
-// NewAdapter initializes Redis adapter.
+// NewAdapter initializes Redis adapter backed by a Ring of servers.
+//
+// Prefer NewClientAdapter for a single server. A Ring looks up the server's
+// command table (COMMAND) before every call and go-redis v8 cannot parse the
+// reply of Redis 7 and newer, so the lookup fails and is repeated on each
+// Get/Set/Release under one mutex, which serializes all cache access.
 func NewAdapter(opt *RingOptions, opts ...AdapterOptions) cache.Adapter {
 	ropt := redis.RingOptions(*opt)
+	return newAdapter(redis.NewRing(&ropt), opts)
+}
+
+// NewClientAdapter initializes Redis adapter backed by a single server.
+func NewClientAdapter(opt *ClientOptions, opts ...AdapterOptions) cache.Adapter {
+	copt := redis.Options(*opt)
+	return newAdapter(redis.NewClient(&copt), opts)
+}
+
+func newAdapter(client redis.UniversalClient, opts []AdapterOptions) cache.Adapter {
 	adapter := &Adapter{
 		store: redisCache.New(&redisCache.Options{
-			Redis: redis.NewRing(&ropt),
+			Redis: client,
 		}),
 		debug: false,
 	}
