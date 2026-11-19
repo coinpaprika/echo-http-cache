@@ -71,18 +71,18 @@ import (
 
 ...
 
-    ringOpt := &redis.RingOptions{
-        Addrs: map[string]string{
-            "server": ":6379",
-        },
+    clientOpt := &redis.ClientOptions{
+        Addr: ":6379",
     }
     cacheClient := cache.NewClient(
-        cache.ClientWithAdapter(redis.NewAdapter(ringOpt)),
+        cache.ClientWithAdapter(redis.NewClientAdapter(clientOpt)),
         cache.ClientWithTTL(10 * time.Minute),
         cache.ClientWithRefreshKey("opn"),
     )
 ...
 ```
+
+`redis.NewAdapter` with `redis.RingOptions` is still available for a ring of several servers, but avoid it for a single server: against Redis 7 and newer it repeats a failing `COMMAND` lookup under one mutex on every cache call, which serializes all cache access.
 
 Example of Client initialization with disk based adapter using [diskv](https://github.com/peterbourgon/diskv):
 ```go
